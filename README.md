@@ -9,8 +9,9 @@ This is the implementation repository of *3L-CACHE: Low Overhead and Precise Lea
 
 ## Build and Install 
 We provide some scripts for quick installation of libCacheSim.
-- [Install dependency](#install-dependency)
-- [Build libCacheSim](#build-libcachesim)
+```bash
+cd scripts && bash install_dependency.sh && bash install_libcachesim.sh
+```
 
 ## Usage
 After building and installing libCacheSim, cachesim should be in the _build/bin/ directory.
