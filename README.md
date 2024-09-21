@@ -19,7 +19,11 @@ After building and installing libCacheSim, cachesim should be in the _build/bin/
 ~/libCacheSim/_build/bin/cachesim trace_path trace_type eviction_algo cache_size [OPTION...]
 ```
 ## Run a single cache simulation
+```bash
 ~/libCacheSim/_build/bin/cachesim /path/to/tencentBlock_ns3964.csv csv 3lcache 1347453593  -t "time-col=1, obj-id-col=2, obj-size-col=3"
+```
 
 ## Run multiple cache simulations
+```bash
 ~/libCacheSim/_build/bin/cachesim /path/to/tencentBlock_ns3964.csv csv 3lcache 1347453593,13474535  -t "time-col=1, obj-id-col=2, obj-size-col=3"
+```
