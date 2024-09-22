@@ -1,6 +1,6 @@
 #ifndef WEBCACHESIM_LRB_H
 #define WEBCACHESIM_LRB_H
-
+// 实现接口和LRB类似，因此直接替换掉原有LRB的函数
 #include "cache.h"
 #include <unordered_map>
 #include <unordered_set>
