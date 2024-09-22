@@ -8,7 +8,7 @@ using namespace chrono;
 using namespace std;
 using namespace lrb;
 
-
+// 实现接口和LRB类似，因此直接替换掉原有LRB的函数
 void LRBCache::train() {
     ++n_retrain;
     auto timeBegin = chrono::system_clock::now();
