@@ -137,9 +137,13 @@ static inline cache_t *create_cache(const char *trace_path, const char *eviction
     cache = GLCache_init(cc_params, eviction_params);
 #endif
 #ifdef ENABLE_LRB
-  } else if (strcasecmp(eviction_algo, "3lcache") == 0) {
+  } else if (strcasecmp(eviction_algo, "lrb") == 0) {
     cache = LRB_init(cc_params, eviction_params);
 #endif
+// #ifdef ENABLE_3LCache
+//   } else if (strcasecmp(eviction_algo, "3lcache") == 0) {
+//     cache = LRB_init(cc_params, eviction_params);
+// #endif
 #ifdef INCLUDE_PRIV
   } else if (strcasecmp(eviction_algo, "mclock") == 0) {
     cache = MClock_init(cc_params, eviction_params);
