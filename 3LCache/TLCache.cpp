@@ -6,10 +6,10 @@
 
 using namespace chrono;
 using namespace std;
-using namespace lrb;
+using namespace TLCache;
 
 
-void LRBCache::train() {
+void TLCacheCache::train() {
     ++n_retrain;
     auto timeBegin = chrono::system_clock::now();
     if (booster) LGBM_BoosterFree(booster);
@@ -65,7 +65,7 @@ void LRBCache::train() {
 }
 
 
-void LRBCache::sample() {
+void TLCacheCache::sample() {
     auto rand_idx = _distribution(_generator);
     uint32_t pos = rand_idx % (in_cache.metas.size() + out_cache.metas.size());
     auto &meta = pos < in_cache.metas.size() ? in_cache.metas[pos] : out_cache.metas[pos - in_cache.metas.size()];
@@ -73,7 +73,7 @@ void LRBCache::sample() {
 }
 
 
-void LRBCache::update_stat_periodic() {
+void TLCacheCache::update_stat_periodic() {
     float percent_beyond;
     segment_percent_beyond.emplace_back(percent_beyond);
     segment_n_retrain.emplace_back(n_retrain);
@@ -90,12 +90,12 @@ void LRBCache::update_stat_periodic() {
     n_retrain = 0;
 }
 
-// bool LRBCache::compareHeapUint(const HeapUint& a, const HeapUint& b) {
+// bool TLCacheCache::compareHeapUint(const HeapUint& a, const HeapUint& b) {
 //     return a.reuse_time < b.reuse_time; // 按照 reuse_time 降序排序
 // }
 
 
-bool LRBCache::lookup(const SimpleRequest &req) {
+bool TLCacheCache::lookup(const SimpleRequest &req) {
     bool ret;
     ++current_seq;
     if (is_full == 1)
@@ -152,7 +152,7 @@ bool LRBCache::lookup(const SimpleRequest &req) {
     return ret;
 }
 
-void LRBCache::erase_out_cache() {
+void TLCacheCache::erase_out_cache() {
     if (out_cache.metas.size() >= max_out_cache_size) {
         if (is_full == 0)
             is_full = 1;
@@ -179,7 +179,7 @@ void LRBCache::erase_out_cache() {
     }
 }
 
-void LRBCache::admit(const SimpleRequest &req) {
+void TLCacheCache::admit(const SimpleRequest &req) {
     const uint64_t &size = req.size;
     if (size > _cacheSize) {
         LOG("L", _cacheSize, req.id, size);
@@ -213,7 +213,7 @@ void LRBCache::admit(const SimpleRequest &req) {
     // }
 }
 
-uint32_t LRBCache::rank() {
+uint32_t TLCacheCache::rank() {
 // 新对象的采样
     vector<uint32_t> sampled_objects;
     sampled_objects = quick_demotion();
@@ -289,7 +289,7 @@ uint32_t LRBCache::rank() {
     return sampled_objects.size();
 }
 
-vector<uint32_t> LRBCache::quick_demotion() {
+vector<uint32_t> TLCacheCache::quick_demotion() {
     vector<uint32_t> sampled_objects;
     int i, j = 0;
     while (new_obj_size > _currentSize * reserved_space * 1.0 / 100  && j < sample_rate * 2 && i < new_obj_keys.size()) {
@@ -309,18 +309,18 @@ vector<uint32_t> LRBCache::quick_demotion() {
     return sampled_objects;
 }
 
-// void LRBCache::evict() {
+// void TLCacheCache::evict() {
 //     is_sampling = true;
 //     auto epair = rank();
 //     evict_with_candidate(epair);
 // }
 
-void LRBCache::evict() {
+void TLCacheCache::evict() {
     auto epair = evict_predobj();
     evict_with_candidate(epair);
 }
 
-void LRBCache::evict_with_candidate(pair<uint64_t, uint32_t> &epair) {
+void TLCacheCache::evict_with_candidate(pair<uint64_t, uint32_t> &epair) {
     is_sampling = true;
     evict_nums -= 1;
     uint64_t key = epair.first;
@@ -357,7 +357,7 @@ void LRBCache::evict_with_candidate(pair<uint64_t, uint32_t> &epair) {
 }
 
 // 驱逐已预测的对象
-pair<uint64_t, uint32_t> LRBCache::evict_predobj(){
+pair<uint64_t, uint32_t> TLCacheCache::evict_predobj(){
     {
         //if not trained yet, or in_cache_lru past memory window, use LRU
         auto pos = in_cache.q.head;
@@ -399,7 +399,7 @@ pair<uint64_t, uint32_t> LRBCache::evict_predobj(){
     return {-1, -1};
 }
 
-void LRBCache::prediction(vector<uint32_t> sampled_objects) {
+void TLCacheCache::prediction(vector<uint32_t> sampled_objects) {
     // auto timeBegin = chrono::system_clock::now();
     uint32_t sample_nums = sampled_objects.size();
     int32_t indptr[sample_nums + 1];

@@ -10,20 +10,20 @@
 #include "TLCache.h"
 
 // using namespace webcachesim;
-// using namespace lrb;
+// using namespace TLCache;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct {
-  void *LRB_cache;
+  void *TLCache_cache;
   char *objective;
-  SimpleRequest lrb_req;
+  SimpleRequest TLCache_req;
 
   pair<uint64_t, uint32_t> to_evict_pair;
   cache_obj_t obj_tmp;
-} LRB_params_t;
+} TLCache_params_t;
 
 static const char *DEFAULT_PARAMS = "objective=byte-miss-ratio";
 
@@ -33,19 +33,19 @@ static const char *DEFAULT_PARAMS = "objective=byte-miss-ratio";
 // ****                                                               ****
 // ***********************************************************************
 
-static void LRB_free(cache_t *cache);
-static bool LRB_get(cache_t *cache, const request_t *req);
+static void TLCache_free(cache_t *cache);
+static bool TLCache_get(cache_t *cache, const request_t *req);
 
-static cache_obj_t *LRB_find(cache_t *cache, const request_t *req,
+static cache_obj_t *TLCache_find(cache_t *cache, const request_t *req,
                              const bool update_cache);
-static cache_obj_t *LRB_insert(cache_t *cache, const request_t *req);
-static cache_obj_t *LRB_to_evict(cache_t *cache, const request_t *req);
-static void LRB_evict(cache_t *cache, const request_t *req);
-static bool LRB_remove(cache_t *cache, const obj_id_t obj_id);
-static int64_t LRB_get_occupied_byte(const cache_t *cache);
-static int64_t LRB_get_n_obj(const cache_t *cache);
+static cache_obj_t *TLCache_insert(cache_t *cache, const request_t *req);
+static cache_obj_t *TLCache_to_evict(cache_t *cache, const request_t *req);
+static void TLCache_evict(cache_t *cache, const request_t *req);
+static bool TLCache_remove(cache_t *cache, const obj_id_t obj_id);
+static int64_t TLCache_get_occupied_byte(const cache_t *cache);
+static int64_t TLCache_get_n_obj(const cache_t *cache);
 
-static void LRB_parse_params(cache_t *cache, const char *cache_specific_params);
+static void TLCache_parse_params(cache_t *cache, const char *cache_specific_params);
 
 // ***********************************************************************
 // ****                                                               ****
@@ -61,27 +61,27 @@ static void LRB_parse_params(cache_t *cache, const char *cache_specific_params);
  * @param cache_specific_params cache specific parameters, see parse_params
  * function or use -e "print" with the cachesim binary
  */
-cache_t *LRB_init(const common_cache_params_t ccache_params,
+cache_t *TLCache_init(const common_cache_params_t ccache_params,
                   const char *cache_specific_params) {
 #ifdef SUPPORT_TTL
   if (ccache_params.default_ttl < 30 * 86400) {
-    ERROR("LRB does not support expiration\n");
+    ERROR("TLCache does not support expiration\n");
     abort();
   }
 #endif
 
-  cache_t *cache = cache_struct_init("LRB", ccache_params, cache_specific_params);
-  cache->cache_init = LRB_init;
-  cache->cache_free = LRB_free;
-  cache->get = LRB_get;
-  cache->find = LRB_find;
-  cache->insert = LRB_insert;
-  cache->evict = LRB_evict;
-  cache->to_evict = LRB_to_evict;
-  cache->remove = LRB_remove;
+  cache_t *cache = cache_struct_init("TLCache", ccache_params, cache_specific_params);
+  cache->cache_init = TLCache_init;
+  cache->cache_free = TLCache_free;
+  cache->get = TLCache_get;
+  cache->find = TLCache_find;
+  cache->insert = TLCache_insert;
+  cache->evict = TLCache_evict;
+  cache->to_evict = TLCache_to_evict;
+  cache->remove = TLCache_remove;
   cache->can_insert = cache_can_insert_default;
-  cache->get_occupied_byte = LRB_get_occupied_byte;
-  cache->get_n_obj = LRB_get_n_obj;
+  cache->get_occupied_byte = TLCache_get_occupied_byte;
+  cache->get_n_obj = TLCache_get_n_obj;
   cache->to_evict_candidate =
       static_cast<cache_obj_t *>(malloc(sizeof(cache_obj_t)));
 
@@ -91,34 +91,34 @@ cache_t *LRB_init(const common_cache_params_t ccache_params,
     cache->obj_md_size = 0;
   }
 
-  auto *params = my_malloc(LRB_params_t);
-  memset(params, 0, sizeof(LRB_params_t));
+  auto *params = my_malloc(TLCache_params_t);
+  memset(params, 0, sizeof(TLCache_params_t));
   cache->eviction_params = params;
 
   if (cache_specific_params != NULL) {
-    LRB_parse_params(cache, cache_specific_params);
+    TLCache_parse_params(cache, cache_specific_params);
   } else {
-    LRB_parse_params(cache, DEFAULT_PARAMS);
+    TLCache_parse_params(cache, DEFAULT_PARAMS);
   }
 
-  auto *lrb = new lrb::LRBCache();
-  params->LRB_cache = static_cast<void *>(lrb);
+  auto *TLCache = new TLCache::TLCacheCache();
+  params->TLCache_cache = static_cast<void *>(TLCache);
 
-  lrb->setSize(ccache_params.cache_size);
+  TLCache->setSize(ccache_params.cache_size);
 
   std::map<string, string> params_map;
 
   params_map["objective"] = params->objective;
 
   if (strcmp(params->objective, "object-miss-ratio") == 0) {
-    snprintf(cache->cache_name, CACHE_NAME_ARRAY_LEN, "%s", "LRB-OMR");
+    snprintf(cache->cache_name, CACHE_NAME_ARRAY_LEN, "%s", "TLCache-OMR");
   } else if (strcasecmp(params->objective, "byte-miss-ratio") == 0) {
-    snprintf(cache->cache_name, CACHE_NAME_ARRAY_LEN, "%s", "LRB-BMR");
+    snprintf(cache->cache_name, CACHE_NAME_ARRAY_LEN, "%s", "TLCache-BMR");
   } else {
-    ERROR("LRB does not support objective %s\n", params->objective);
+    ERROR("TLCache does not support objective %s\n", params->objective);
   }
 
-  lrb->init_with_params(params_map);
+  TLCache->init_with_params(params_map);
 
   return cache;
 }
@@ -128,12 +128,12 @@ cache_t *LRB_init(const common_cache_params_t ccache_params,
  *
  * @param cache
  */
-static void LRB_free(cache_t *cache) {
-  auto *params = static_cast<LRB_params_t *>(cache->eviction_params);
-  auto *LRB = static_cast<lrb::LRBCache *>(params->LRB_cache);
-  delete LRB;
+static void TLCache_free(cache_t *cache) {
+  auto *params = static_cast<TLCache_params_t *>(cache->eviction_params);
+  auto *TLCache = static_cast<TLCache::TLCacheCache *>(params->TLCache_cache);
+  delete TLCache;
   free(cache->to_evict_candidate);
-  my_free(sizeof(LRB_params_t), params);
+  my_free(sizeof(TLCache_params_t), params);
   cache_struct_free(cache);
 }
 
@@ -156,7 +156,7 @@ static void LRB_free(cache_t *cache) {
  * @param req
  * @return true if cache hit, false if cache miss
  */
-static bool LRB_get(cache_t *cache, const request_t *req) {
+static bool TLCache_get(cache_t *cache, const request_t *req) {
   return cache_get_base(cache, req);
 }
 
@@ -176,18 +176,18 @@ static bool LRB_get(cache_t *cache, const request_t *req) {
  *  and if the object is expired, it is removed from the cache
  * @return the object or NULL if not found
  */
-static cache_obj_t *LRB_find(cache_t *cache, const request_t *req,
+static cache_obj_t *TLCache_find(cache_t *cache, const request_t *req,
                              const bool update_cache) {
-  auto *params = static_cast<LRB_params_t *>(cache->eviction_params);
-  auto *lrb = static_cast<lrb::LRBCache *>(params->LRB_cache);
+  auto *params = static_cast<TLCache_params_t *>(cache->eviction_params);
+  auto *TLCache = static_cast<TLCache::TLCacheCache *>(params->TLCache_cache);
 
   if (!update_cache) {
-    bool is_hit = lrb->exist(static_cast<int64_t>(req->obj_id));
+    bool is_hit = TLCache->exist(static_cast<int64_t>(req->obj_id));
     return is_hit ? reinterpret_cast<cache_obj_t *>(0x1) : NULL;
   }
 
-  params->lrb_req.reinit(cache->n_req, req->obj_id, req->obj_size, nullptr);
-  bool is_hit = lrb->lookup(params->lrb_req);
+  params->TLCache_req.reinit(cache->n_req, req->obj_id, req->obj_size, nullptr);
+  bool is_hit = TLCache->lookup(params->TLCache_req);
 
   if (is_hit) {
     return reinterpret_cast<cache_obj_t *>(0x1);
@@ -207,12 +207,12 @@ static cache_obj_t *LRB_find(cache_t *cache, const request_t *req,
  * @param req
  * @return the inserted object
  */
-static cache_obj_t *LRB_insert(cache_t *cache, const request_t *req) {
-  auto *params = static_cast<LRB_params_t *>(cache->eviction_params);
-  auto *lrb = static_cast<lrb::LRBCache *>(params->LRB_cache);
-  params->lrb_req.reinit(cache->n_req, req->obj_id, req->obj_size, nullptr);
+static cache_obj_t *TLCache_insert(cache_t *cache, const request_t *req) {
+  auto *params = static_cast<TLCache_params_t *>(cache->eviction_params);
+  auto *TLCache = static_cast<TLCache::TLCacheCache *>(params->TLCache_cache);
+  params->TLCache_req.reinit(cache->n_req, req->obj_id, req->obj_size, nullptr);
 
-  lrb->admit(params->lrb_req);
+  TLCache->admit(params->TLCache_req);
 
   return reinterpret_cast<cache_obj_t *>(0x1);
 }
@@ -228,12 +228,12 @@ static cache_obj_t *LRB_insert(cache_t *cache, const request_t *req) {
  * @param req
  * @return cache_obj_t*
  */
-static cache_obj_t *LRB_to_evict(cache_t *cache, const request_t *req) {
-  auto *params = static_cast<LRB_params_t *>(cache->eviction_params);
-  auto *lrb = static_cast<lrb::LRBCache *>(params->LRB_cache);
-  // lrb rank变成了evict_preobj
-  params->to_evict_pair = lrb->evict_predobj();
-  auto &meta = lrb->in_cache.metas[params->to_evict_pair.second];
+static cache_obj_t *TLCache_to_evict(cache_t *cache, const request_t *req) {
+  auto *params = static_cast<TLCache_params_t *>(cache->eviction_params);
+  auto *TLCache = static_cast<TLCache::TLCacheCache *>(params->TLCache_cache);
+  // TLCache rank变成了evict_preobj
+  params->to_evict_pair = TLCache->evict_predobj();
+  auto &meta = TLCache->in_cache.metas[params->to_evict_pair.second];
 
   params->obj_tmp.obj_id = params->to_evict_pair.first;
   params->obj_tmp.obj_size = meta._size;
@@ -253,15 +253,15 @@ static cache_obj_t *LRB_to_evict(cache_t *cache, const request_t *req) {
  * @param req not used
  * @param evicted_obj if not NULL, return the evicted object to caller
  */
-static void LRB_evict(cache_t *cache, const request_t *req) {
-  auto *params = static_cast<LRB_params_t *>(cache->eviction_params);
-  auto *lrb = static_cast<lrb::LRBCache *>(params->LRB_cache);
+static void TLCache_evict(cache_t *cache, const request_t *req) {
+  auto *params = static_cast<TLCache_params_t *>(cache->eviction_params);
+  auto *TLCache = static_cast<TLCache::TLCacheCache *>(params->TLCache_cache);
 
   if (cache->to_evict_candidate_gen_vtime == cache->n_req) {
-    lrb->evict_with_candidate(params->to_evict_pair);
+    TLCache->evict_with_candidate(params->to_evict_pair);
     cache->to_evict_candidate_gen_vtime = -1;
   } else {
-    lrb->evict();
+    TLCache->evict();
   }
 }
 
@@ -278,26 +278,26 @@ static void LRB_evict(cache_t *cache, const request_t *req) {
  * @return true if the object is removed, false if the object is not in the
  * cache
  */
-static bool LRB_remove(cache_t *cache, const obj_id_t obj_id) {
-  auto *params = static_cast<LRB_params_t *>(cache->eviction_params);
-  auto *LRB = static_cast<lrb::LRBCache *>(params->LRB_cache);
+static bool TLCache_remove(cache_t *cache, const obj_id_t obj_id) {
+  auto *params = static_cast<TLCache_params_t *>(cache->eviction_params);
+  auto *TLCache = static_cast<TLCache::TLCacheCache *>(params->TLCache_cache);
 
   ERROR("do not support remove");
   return true;
 }
 
-static int64_t LRB_get_n_obj(const cache_t *cache) {
-  auto *params = static_cast<LRB_params_t *>(cache->eviction_params);
-  auto *lrb = static_cast<lrb::LRBCache *>(params->LRB_cache);
+static int64_t TLCache_get_n_obj(const cache_t *cache) {
+  auto *params = static_cast<TLCache_params_t *>(cache->eviction_params);
+  auto *TLCache = static_cast<TLCache::TLCacheCache *>(params->TLCache_cache);
 
-  return lrb->in_cache.metas.size();
+  return TLCache->in_cache.metas.size();
 }
 
-static int64_t LRB_get_occupied_byte(const cache_t *cache) {
-  auto *params = static_cast<LRB_params_t *>(cache->eviction_params);
-  auto *lrb = static_cast<lrb::LRBCache *>(params->LRB_cache);
+static int64_t TLCache_get_occupied_byte(const cache_t *cache) {
+  auto *params = static_cast<TLCache_params_t *>(cache->eviction_params);
+  auto *TLCache = static_cast<TLCache::TLCacheCache *>(params->TLCache_cache);
 
-  return lrb->_currentSize;
+  return TLCache->_currentSize;
 }
 
 // ***********************************************************************
@@ -305,7 +305,7 @@ static int64_t LRB_get_occupied_byte(const cache_t *cache) {
 // ****                  parameter set up functions                   ****
 // ****                                                               ****
 // ***********************************************************************
-static const char *LRB_current_params(cache_t *cache, LRB_params_t *params) {
+static const char *TLCache_current_params(cache_t *cache, TLCache_params_t *params) {
   static __thread char params_str[128];
   int n = snprintf(params_str, 128, "objective=%s", params->objective);
 
@@ -314,9 +314,9 @@ static const char *LRB_current_params(cache_t *cache, LRB_params_t *params) {
   return params_str;
 }
 
-static void LRB_parse_params(cache_t *cache,
+static void TLCache_parse_params(cache_t *cache,
                              const char *cache_specific_params) {
-  LRB_params_t *params = (LRB_params_t *)cache->eviction_params;
+  TLCache_params_t *params = (TLCache_params_t *)cache->eviction_params;
   char *params_str = strdup(cache_specific_params);
   char *end;
 
@@ -337,7 +337,7 @@ static void LRB_parse_params(cache_t *cache,
         ERROR("out of memory %s\n", strerror(errno));
       }
     } else if (strcasecmp(key, "print") == 0) {
-      printf("current parameters: %s\n", LRB_current_params(cache, params));
+      printf("current parameters: %s\n", TLCache_current_params(cache, params));
       exit(0);
     } else {
       ERROR("%s does not have parameter %s\n", cache->cache_name, key);
