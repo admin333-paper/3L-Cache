@@ -1,5 +1,5 @@
-#ifndef LRB_CACHE_H
-#define LRB_CACHE_H
+#ifndef TLCache_CACHE_H
+#define TLCache_CACHE_H
 
 #include <map>
 #include <iostream>

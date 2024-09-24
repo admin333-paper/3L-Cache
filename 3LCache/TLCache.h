@@ -1,5 +1,5 @@
-#ifndef WEBCACHESIM_LRB_H
-#define WEBCACHESIM_LRB_H
+#ifndef WEBCACHESIM_TLCache_H
+#define WEBCACHESIM_TLCache_H
 
 #include "cache.h"
 #include <unordered_map>
@@ -19,7 +19,7 @@ using namespace std;
 
 using spp::sparse_hash_map;
 
-namespace lrb {
+namespace TLCache {
     static const uint8_t max_n_past_timestamps = 4;
     static const uint8_t max_n_past_distances = 3;
     static const uint32_t batch_size = 131072 / 2;
@@ -236,7 +236,7 @@ struct KeyMapEntryT {
     uint32_t list_pos;
 };
 
-class LRBCache : public Cache {
+class TLCacheCache : public Cache {
 public:
     uint64_t current_seq = -1;
     uint32_t n_feature;
@@ -345,7 +345,7 @@ public:
             } else if(it.first == "sample_rate") {
                 sample_rate = stoull(it.second);
             } else {
-                cerr << "LRB unrecognized parameter: " << it.first << endl;
+                cerr << "TLCache unrecognized parameter: " << it.first << endl;
             }
         }
 
