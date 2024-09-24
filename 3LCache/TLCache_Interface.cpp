@@ -5,8 +5,8 @@
 #include <map>
 #include <string>
 
-#include "./libCacheSim/libCacheSim/dataStructure/hashtable/hashtable.h"
-#include "./libCacheSim/libCacheSim/include/libCacheSim/cache.h"
+#include "../libCacheSim/libCacheSim/dataStructure/hashtable/hashtable.h"
+#include "../libCacheSim/libCacheSim/include/libCacheSim/cache.h"
 #include "TLCache.h"
 
 // using namespace webcachesim;

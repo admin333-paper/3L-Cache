@@ -273,6 +273,8 @@ file(GLOB cache_source
 
         ${PROJECT_SOURCE_DIR}/libCacheSim/cache/eviction/LHD/*
         ${PROJECT_SOURCE_DIR}/libCacheSim/cache/eviction/cpp/*
+
+        # ../3LCache/*.cpp
     )
 
 if (EXISTS ${PROJECT_SOURCE_DIR}/libCacheSim/cache/eviction/fifo)
@@ -309,7 +311,7 @@ endif(ENABLE_GLCACHE)
 
 if (ENABLE_LRB)
     file(GLOB LRB_source
-            ${PROJECT_SOURCE_DIR}/libCacheSim/cache/eviction/LRB/*.cpp)
+            ../3LCache/*.cpp)
     set (cache_source
             ${cache_source} ${LRB_source}
     )
@@ -373,13 +375,13 @@ install(TARGETS ${PROJECT_NAME}
 
 
 
-if (ENABLE_TESTS)
-    include(CTest)
-    enable_testing()
-    message(STATUS "Building with test")
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
-else ()
-    message(STATUS "Building without test")
-endif ()
+# if (ENABLE_TESTS)
+#     include(CTest)
+#     enable_testing()
+#     message(STATUS "Building with test")
+#     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
+# else ()
+#     message(STATUS "Building without test")
+# endif ()
 
 

@@ -1,13 +1,8 @@
 #!/bin/bash 
 
-set -eu # Enable error checking and command tracing
-
 setup_ubuntu() {
 	sudo apt update
-	sudo apt install -yqq build-essential cmake google-perftools xxhash
-	
-	sudo apt install -yqq libglib2.0-dev libunwind-dev
-	sudo apt install -yqq libgoogle-perftools-dev
+	sudo apt install -yqq libglib2.0-dev libgoogle-perftools-dev build-essential cmake google-perftools
 }
 
 setup_centos() {
@@ -15,12 +10,13 @@ setup_centos() {
 }
 
 setup_macOS() {
-	brew install glib google-perftools argp-standalone xxhash
+	brew install glib google-perftools
 }
 
 setup_xgboost() {
     pushd /tmp/
-	git clone --recursive https://github.com/dmlc/xgboost
+	# git clone --recursive https://github.com/dmlc/xgboost
+	git clone --recursive --branch v2.0.0 https://github.com/dmlc/xgboost.git
 	pushd xgboost
 	mkdir build
 	pushd build
@@ -28,14 +24,14 @@ setup_xgboost() {
 	if [[ $GITHUB_ACTIONS == "true" ]]; then
 		make
 	else
-		make -j $(nproc)
+		make -j
 	fi
 	sudo make install
 }
 
 setup_lightgbm() {
     pushd /tmp/
-	git clone --recursive https://github.com/microsoft/LightGBM
+	git clone --recursive --branch v2.2.2 https://github.com/microsoft/LightGBM
 	pushd LightGBM
 	mkdir build
 	pushd build
@@ -43,7 +39,7 @@ setup_lightgbm() {
 	if [[ $GITHUB_ACTIONS == "true" ]]; then
 		make
 	else
-		make -j $(nproc)
+		make -j
 	fi
 	sudo make install
 }
@@ -56,25 +52,25 @@ setup_zstd() {
     mkdir _build;
     pushd _build/;
     cmake ..
-    make -j $(nproc)
+    make -j
     sudo make install
 }
 
+
 CURR_DIR=$(pwd)
 
-if [ -n "$(uname -a | grep Ubuntu)" ] || [ -n "$(uname -a | grep WSL)" ]; then
-    setup_ubuntu
-elif [ -n "$(uname -a | grep Darwin)" ]; then
-    setup_macOS
+if [  -n "$(uname -a | grep Ubuntu)" ]; then
+	setup_ubuntu
+elif [  -n "$(uname -a | grep Darwin)" ]; then
+	setup_macOS
 else
-    setup_centos
-fi 
-
-setup_zstd
+	setup_centos
+fi  
 
 if [[ ! $GITHUB_ACTIONS == "true" ]]; then
 	setup_xgboost
 	setup_lightgbm
 fi
+setup_zstd
 
 cd $CURR_DIR
