@@ -1,11 +1,11 @@
-# 3L-CACHE: Low Overhead and Precise Learning-based Eviction Policy for Web Caches
+# 3L-Cache: Low Overhead and Precise Learning-based Eviction Policy for Web Caches
 
 This is the implementation repository of *3L-CACHE: Low Overhead and Precise Learning-based Eviction Policy for Web Caches*. This artifact provides the source code of 3L-Cache and scripts to reproduce experiment results in our paper.
 
 #### 3L Cache is implemented in the [libCacheSim](https://github.com/1a1a11a/libCacheSim) library, and its experimental environment configuration is consistent with libCacheSim.
 
  ## Supported Platforms
-- Software Requirements: Ubuntu 18.04
+- Software Requirements: Ubuntu 18.04, cmake 3.28.6
 
 ## Build and Install 
 We provide some scripts for quick installation of libCacheSim.
@@ -28,4 +28,16 @@ After building and installing libCacheSim, cachesim should be in the _build/bin/
 ~/libCacheSim/_build/bin/cachesim /path/to/tencentBlock_ns3964.csv csv 3lcache 1347453593,13474535  -t "time-col=1, obj-id-col=2, obj-size-col=3"
 ```
 
+## Examples
+```bash
 
+~/libCacheSim/_build/bin/cachesim /path/to/tencentBlock_ns3964.csv csv 3lcache 1347453593  -t "time-col=1, obj-id-col=2, obj-size-col=3"
+# Output object miss ratio and throughput
+/data/trace/tencentblock/tencentBlock_ns3964.csv 3L-Cache cache size     1GiB,         13625211 req, miss ratio 0.3473, throughput 0.58 MQPS
+
+
+~/libCacheSim/_build/bin/cachesim /path/to/tencentBlock_ns3964.csv csv 3lcache 1347453593,13474535  -t "time-col=1, obj-id-col=2, obj-size-col=3"
+#Output object miss ratio and byte miss ratio
+result/tencentBlock_ns3964.csv                          3L-Cache cache size        1GiB, 13625211 req, miss ratio 0.3473, byte miss ratio 0.1030
+result/tencentBlock_ns3964.csv                          3L-Cache cache size        0GiB, 13625211 req, miss ratio 0.5297, byte miss ratio 0.6389
+```
