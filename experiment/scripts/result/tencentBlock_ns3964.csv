@@ -1,0 +1,2 @@
+result/tencentBlock_ns3964.csv                          3L-Cache cache size        1GiB, 13625211 req, miss ratio 0.3473, byte miss ratio 0.1030
+result/tencentBlock_ns3964.csv                          3L-Cache cache size        0GiB, 13625211 req, miss ratio 0.5297, byte miss ratio 0.6389

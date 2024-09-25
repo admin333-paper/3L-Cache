@@ -41,3 +41,10 @@ After building and installing libCacheSim, cachesim should be in the _build/bin/
 result/tencentBlock_ns3964.csv                          3L-Cache cache size        1GiB, 13625211 req, miss ratio 0.3473, byte miss ratio 0.1030
 result/tencentBlock_ns3964.csv                          3L-Cache cache size        0GiB, 13625211 req, miss ratio 0.5297, byte miss ratio 0.6389
 ```
+
+## Evaluate algorithms on a large number of traces
+```bash
+cd experiment/scripts
+python3 miss_ratio_simulation.py <dataset_path> <num_process> <eviction_algo>
+```
+The miss_ratio_simulation script can evaluate algorithms on a large number of traces, and the evaluation results will be stored in experiments/scripts/results.

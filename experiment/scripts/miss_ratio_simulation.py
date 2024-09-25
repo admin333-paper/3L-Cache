@@ -1,7 +1,6 @@
 import subprocess
 import os
-import re
-import time
+import sys
 from datetime import datetime
 import json
 import concurrent.futures
@@ -28,27 +27,32 @@ def parallel_executor_libcachesim(params):
             executor.submit(lib_command_executor, command)
 
 if __name__ == "__main__":
-    dataset_paths = []
+        # Path of the datasets
+    dataset_path = sys.argv[0]
+    # Number of processes
+    num_process = sys.argv[1]
+    # policy
+    algo = sys.argv[2]
     # Record the unique bytes of traces
     with open("./trace_unique_bytes", "r") as file:
         trace_info = json.loads(file.read())
     file_list = []
     csizes = []
-    for dataset_path in dataset_paths:
-        for file in os.listdir(dataset_path):
-            # only csv
-            if not os.path.isdir(os.path.join(dataset_path, file)) and file.split('.')[-1] == 'csv':
-                # small cache size and large cache size
-                csizes.append([trace_info[file] // 1000, trace_info[file] // 10])
-                file_list.append(dataset_path + file)
+    # for dataset_path in dataset_paths:
+    for file in os.listdir(dataset_path):
+        # only csv
+        if not os.path.isdir(os.path.join(dataset_path, file)) and file.split('.')[-1] == 'csv':
+            # small cache size and large cache size
+            csizes.append([trace_info[file] // 1000, trace_info[file] // 10])
+            file_list.append(dataset_path + file)
     
-    cache_polices = ['fifo', 'lru', 'lecar', 'lhd', 'sieve', '3lcache']
-    for cache_policy in cache_polices:
-        params = {
-            'file': file_list,
-            'cachesize': csizes,
-            'algo': cache_policy,
-            'num_process': 60,
-            'type': 'csv'
-        }
-        parallel_executor_libcachesim(params)
+    # cache_polices = ['fifo', 'lru', 'lecar', 'lhd', 'sieve', '3lcache']
+    # for cache_policy in algo:
+    params = {
+        'file': file_list,
+        'cachesize': csizes,
+        'algo': algo,
+        'num_process': num_process,
+        'type': 'csv'
+    }
+    parallel_executor_libcachesim(params)
