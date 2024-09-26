@@ -26,7 +26,7 @@ cd scripts && bash install_dependency.sh && bash install_libcachesim.sh
 ```
 
 ## Usage
-After building and installing libCacheSim, cachesim should be in the _build/bin/ directory.
+After building and installing, cachesim should be in the _build/bin/ directory.
 ```bash
 ~/libCacheSim/_build/bin/cachesim trace_path trace_type eviction_algo cache_size [OPTION...]
 ```
