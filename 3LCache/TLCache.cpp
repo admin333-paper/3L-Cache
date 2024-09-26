@@ -90,10 +90,6 @@ void TLCacheCache::update_stat_periodic() {
     n_retrain = 0;
 }
 
-// bool TLCacheCache::compareHeapUint(const HeapUint& a, const HeapUint& b) {
-//     return a.reuse_time < b.reuse_time; // 按照 reuse_time 降序排序
-// }
-
 
 bool TLCacheCache::lookup(const SimpleRequest &req) {
     bool ret;
@@ -109,7 +105,7 @@ bool TLCacheCache::lookup(const SimpleRequest &req) {
                 n_hit++;
             n_window_hit++;
         }
-        // 找到对应的窗口内的对象请求
+
         Meta &meta = list_idx == 0 ?  in_cache.metas[list_pos]: out_cache.metas[uint32_t(list_pos - out_cache.front_index)];
         auto sample_time = meta._sample_times;
         if (sample_time != 0 && (_distribution(_generator) % 4 == 0 || !booster)) {
@@ -125,12 +121,10 @@ bool TLCacheCache::lookup(const SimpleRequest &req) {
         } else {
             meta._sample_times = 0;
         }
-        // 如果对象位于out_cache中
-        // 命中时
+
         meta.update(current_seq);
         if (!list_idx) { 
-            // 基于lru进行采样
-            // 如果当前指针命中，则将指针移动到下一个位置 
+
             if(samplepointer == list_pos){
                 samplepointer = in_cache.dq[samplepointer].next;
             }
@@ -141,7 +135,6 @@ bool TLCacheCache::lookup(const SimpleRequest &req) {
         }
         ret = !list_idx;
     } else {
-        // 如果对象没有在记忆窗口出现过   
         ret = false;
     }
     if (is_sampling) {
@@ -161,7 +154,7 @@ void TLCacheCache::erase_out_cache() {
             auto sample_time = meta._sample_times;
             // uint32_t frac = one_hit_wonder > 0.5 * batch_size ? 50: 2;
             // if (sample_time != 0 && (_distribution(_generator) % frac == 0 || !booster)) {
-            if (sample_time != 0 && (_distribution(_generator) % 32 == 0 || !booster)) {
+            if (sample_time != 0 && (_distribution(_generator) % 4 == 0 || !booster)) {
                 uint32_t future_distance = MAX_EVICTION_BOUNDARY[0] + current_seq - meta._past_timestamp;
                 if (MAX_EVICTION_BOUNDARY[1] < current_seq - meta._past_timestamp)
                     MAX_EVICTION_BOUNDARY[1] = current_seq - meta._past_timestamp;
@@ -186,11 +179,11 @@ void TLCacheCache::admit(const SimpleRequest &req) {
         return;
     }
     max_out_cache_size = in_cache.metas.size() * hsw + 2;
-    // 未开始替换对象时，我们只需要在out_cache中更新数据即可
+
     auto it = key_map.find(req.id);
     uint32_t pos;
     if (it == key_map.end()){
-        // 当缓存的对象信息数超过阈值，则驱逐最久未访问的对象，此处可以考虑训练数据的采样
+
         pos = in_cache.metas.size();
         in_cache.metas.emplace_back(Meta(req.id, req.size, current_seq, req.extra_features));
         in_cache.dq.emplace_back(CircleList());
@@ -203,7 +196,7 @@ void TLCacheCache::admit(const SimpleRequest &req) {
     in_cache.request(pos);
     key_map[req.id] = {0, pos};
     _currentSize += size;
-    // 记录新对象
+
     if (booster) {
         new_obj_size += req.size;
         new_obj_keys.emplace_back(req.id);
@@ -214,7 +207,6 @@ void TLCacheCache::admit(const SimpleRequest &req) {
 }
 
 uint32_t TLCacheCache::rank() {
-// 新对象的采样
     vector<uint32_t> sampled_objects;
     sampled_objects = quick_demotion();
     unsigned int idx_row = 0;
@@ -240,8 +232,6 @@ uint32_t TLCacheCache::rank() {
         scan_length++;
         
         if (scan_length >= initial_queue_length) {
-            
-            // 对象丢失率不需要进行调整，顺序扫描就行了，只需要将sample_boundary调整到最大即可
             if (objective == object_miss_ratio) {
                 initial_queue_length = in_cache.metas.size();
                 samplepointer = in_cache.q.head;
@@ -255,7 +245,6 @@ uint32_t TLCacheCache::rank() {
             for (int i =  0; i < 16; i++)
                 eviciton_sum += object_distribution_n_eviction[i];
             for (int i = 0; i < 16; i++) {  
-                // 选择99分位的请求次数
                 p99 += object_distribution_n_eviction[i];
                 if (p99 >= 0.99 * eviciton_sum) {
                     if (i == 0)
@@ -336,7 +325,6 @@ void TLCacheCache::evict_with_candidate(pair<uint64_t, uint32_t> &epair) {
     out_cache.metas.emplace_back(in_cache.metas[old_pos]);
     in_cache.erase(old_pos);
     uint32_t in_cache_tail_idx = in_cache.metas.size() - 1;
-    // 调整链表
     if (old_pos != in_cache_tail_idx) {
         if (samplepointer == in_cache_tail_idx){
             samplepointer = in_cache.dq[in_cache_tail_idx].next;
@@ -356,7 +344,6 @@ void TLCacheCache::evict_with_candidate(pair<uint64_t, uint32_t> &epair) {
     in_cache.dq.pop_back();
 }
 
-// 驱逐已预测的对象
 pair<uint64_t, uint32_t> TLCacheCache::evict_predobj(){
     {
         //if not trained yet, or in_cache_lru past memory window, use LRU
@@ -366,9 +353,6 @@ pair<uint64_t, uint32_t> TLCacheCache::evict_predobj(){
             return {meta._key, pos};
         } 
     }
-    // 使用堆排序
-    // 通过一个map和堆进行优化，map用于处理缓存状态更新的问题，堆用于处理驱逐时的问题
-    // map防止对象更新状态后重新采样，而导致报错
     if (evict_nums <= 0 || pred_map.empty()) {
         evict_nums = rank() / eviction_rate;
     }
@@ -388,7 +372,6 @@ pair<uint64_t, uint32_t> TLCacheCache::evict_predobj(){
         if(pred_map.find(key) != pred_map.end() && pred_map[key] == reuse_time){
             uint32_t old_pos = key_map[key].list_pos;
             object_distribution_n_eviction[uint16_t(log2(in_cache.metas[old_pos]._freq))]++;
-            // 区分新对象和旧对象的驱逐比例，0表示新对象
             if (in_cache.metas[old_pos]._past_timestamp < in_cache.metas[samplepointer]._past_timestamp) 
                 evcition_distribution[0]++;
             evcition_distribution[1]++;
@@ -416,13 +399,11 @@ void TLCacheCache::prediction(vector<uint32_t> sampled_objects) {
     uint32_t pos;
     unsigned int idx_row = 0;
     for (; idx_row < sample_nums; idx_row++) {
-        // 使用lru的方法进行采样驱逐，修改点
         pos = sampled_objects[idx_row];
         auto &meta = in_cache.metas[pos];
         keys[idx_row] = meta._key;
         poses[idx_row] = pos;
         indices[idx_feature] = 0;
-        // 年龄
         data[idx_feature++] = current_seq - meta._past_timestamp;
         
         past_timestamps[idx_row] = meta._past_timestamp;

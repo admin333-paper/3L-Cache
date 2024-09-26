@@ -58,7 +58,6 @@ public:
     uint32_t _size;
     uint32_t _past_timestamp;
     uint16_t _freq;
-    // uint16_t _extra_features[max_n_extra_feature];
     MetaExtra *_extra = nullptr;
     uint64_t _sample_times;
 
@@ -108,7 +107,6 @@ struct LinkHE {
     uint32_t tail = -1;
 };
 
-// 将in_cache和out_cache分开
 class CacheUpdateQueue {
 public:
     deque<Meta> metas;
@@ -116,9 +114,7 @@ public:
     vector<CircleList> dq;
     LinkHE q;
 
-    // 重新请求对象，将其放在链表末端，这个只有缓存内的请求(包括缓存队列和影子队列的对象)
     uint32_t re_request(const uint32_t pos) {
-        // 对象的相邻对象进行连接
         if (pos == q.head){
             q.tail = q.head;
             q.head = dq[q.head].next;
@@ -137,7 +133,6 @@ public:
         return q.tail;
     }
 
-    // 包括缓存内的和缓存外的请求
     uint32_t request(const uint32_t pos) {
         if (q.head == -1) {
             q.head = pos;
@@ -155,7 +150,6 @@ public:
         return q.tail;
     }
 
-    // 删除对象，删除其在链表中的位置
     void erase(const uint32_t pos) {
         uint32_t next = dq[pos].next;
         uint32_t prev = dq[pos].prev;
@@ -241,15 +235,10 @@ public:
     uint64_t current_seq = -1;
     uint32_t n_feature;
     sparse_hash_map<uint64_t, float> pred_map;
-    // 用于记录对象的预测结果, 同时记录id, 以保证状态切换
     vector<HeapUint> pred_times;
-    // 驱逐候选对象采样步长与区间
     uint64_t scan_length = 0;
-    // 新对象
     vector<uint64_t> new_obj_keys;
-    // 新对象占用地缓存空间
     uint64_t new_obj_size = 0;
-    // 驱逐对象的数量
     int evict_nums = 0;
     uint16_t sample_rate = 1024;
     uint8_t eviction_rate = 2;
@@ -260,14 +249,11 @@ public:
     uint32_t initial_queue_length = 0;
     uint64_t origin_current_seq = 0;
     uint8_t reserved_space = 1;
-    // 采样指针
     uint32_t samplepointer = 0;
     uint8_t hsw = 1;
     uint64_t MAX_EVICTION_BOUNDARY[2] = {0, 0};
     uint32_t max_out_cache_size = 2;
-    // 窗口满了后
     uint8_t is_full = 0;
-    // 对象命中率的时间基线
     uint64_t n_req = 0;
     uint64_t n_hit = 0;
     uint64_t n_window_hit=0;
@@ -288,7 +274,6 @@ public:
     BoosterHandle booster = nullptr;
 
     unordered_map<string, string> training_params = {
-            //don't use alias here. C api may not recongize
             {"boosting",         "gbdt"},
             {"objective",        "regression"},
             {"num_iterations",   "16"},

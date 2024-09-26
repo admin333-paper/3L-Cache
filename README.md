@@ -7,6 +7,18 @@ This is the implementation repository of *3L-CACHE: Low Overhead and Precise Lea
  ## Supported Platforms
 - Software Requirements: Ubuntu 18.04, cmake 3.28.6
 
+## Trace Format
+Request traces are expected to be in a space-separated format with 3 columns.
+- time should be a long long int
+- id should be a long long int
+- size should be uint32
+
+| time |  id | size |
+| ---- | --- | ---- |
+|   1  |  1  |  120 |
+|   2  |  2  |   64 |
+|   3  |  2  |   64 |
+
 ## Build and Install 
 We provide some scripts for quick installation of libCacheSim.
 ```bash
