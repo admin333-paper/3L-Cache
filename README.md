@@ -20,7 +20,7 @@ Request traces are expected to be in a space-separated format with 3 columns.
 |   3  |  2  |   64 |
 
 ## Build and Install 
-We provide some scripts for quick installation of libCacheSim.
+We provide some scripts for installation.
 ```bash
 cd scripts && bash install_dependency.sh && bash install_libcachesim.sh
 ```
