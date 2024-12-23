@@ -48,6 +48,8 @@ enum argp_option_short {
   OPTION_PREFETCH_ALGO = 'p',
   OPTION_PREFETCH_PARAMS = 0x109,
   OPTION_PRINT_HEAD_REQ = 0x10a,
+
+  OPTION_OBJECTIVE = 0x10b
 };
 
 /*
@@ -94,6 +96,9 @@ static struct argp_option options[] = {
     {"consider-obj-metadata", OPTION_CONSIDER_OBJ_METADATA, "false", 0,
      "Whether consider per object metadata size in the simulated cache", 10},
     {"verbose", OPTION_VERBOSE, "1", 0, "Produce verbose output", 10},
+
+    {"objective", OPTION_OBJECTIVE, "1", 0, "objective=object-miss-ratio", 10},
+    
     {"print-head-req", OPTION_PRINT_HEAD_REQ, "false", 0,
      "Print the first few requests", 10},
 
@@ -107,6 +112,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   struct arguments *arguments = state->input;
 
   switch (key) {
+    // case OPTION_OBJECTIVE:
+      // arguments->objective = "object-miss-ratio";
+      // int i;
     case OPTION_NUM_THREAD:
       arguments->n_thread = atoi(arg);
       if (arguments->n_thread == 0 || arguments->n_thread == -1) {

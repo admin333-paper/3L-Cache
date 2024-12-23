@@ -123,6 +123,7 @@ void parse_reader_params(const char *reader_params_str,
                strcasecmp(key, "obj-size-field") == 0 ||
                strcasecmp(key, "size-col") == 0 ||
                strcasecmp(key, "size-field") == 0) {
+      // params->objective
       params->obj_size_field = (int)strtol(value, &end, 0);
       if (strlen(end) > 2)
         ERROR("param parsing error, find string \"%s\" after number\n", end);

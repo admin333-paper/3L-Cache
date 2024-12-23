@@ -29,20 +29,8 @@ setup_xgboost() {
 	sudo make install
 }
 
-setup_lightgbm() {
-    pushd /tmp/
-	git clone --recursive --branch v2.2.2 https://github.com/microsoft/LightGBM
-	pushd LightGBM
-	mkdir build
-	pushd build
-	cmake ..
-	if [[ $GITHUB_ACTIONS == "true" ]]; then
-		make
-	else
-		make -j
-	fi
-	sudo make install
-}
+
+
 
 setup_zstd() {
     pushd /tmp/
@@ -59,6 +47,13 @@ setup_zstd() {
 
 CURR_DIR=$(pwd)
 
+# install LightGBM
+cd ./LightGBM/build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+sudo make install
+cd ../..
+
 if [  -n "$(uname -a | grep Ubuntu)" ]; then
 	setup_ubuntu
 elif [  -n "$(uname -a | grep Darwin)" ]; then
@@ -69,7 +64,7 @@ fi
 
 if [[ ! $GITHUB_ACTIONS == "true" ]]; then
 	setup_xgboost
-	setup_lightgbm
+	# setup_lightgbm
 fi
 setup_zstd
 

@@ -53,16 +53,14 @@ struct MetaExtra {
 
 class Meta {
 public:
-    //25 byte
     uint64_t _key;
     uint32_t _size;
-    uint32_t _past_timestamp;
+    uint64_t _past_timestamp;
     uint16_t _freq;
     MetaExtra *_extra = nullptr;
     uint64_t _sample_times;
 
-    Meta(const uint64_t &key, const uint64_t &size, const uint64_t &past_timestamp,
-            const vector<uint16_t> &extra_features) {
+    Meta(const uint64_t &key, const uint64_t &size, const uint64_t &past_timestamp) {
         _key = key;
         _size = size;
         _past_timestamp = past_timestamp;
@@ -80,15 +78,15 @@ public:
     void free() {
         delete _extra;
     }
-    void update(const uint32_t &past_timestamp) {
-        //distance
-        uint32_t _distance = past_timestamp - _past_timestamp;
-        assert(_distance);
-        if (!_extra) {
-            _extra = new MetaExtra(_distance);
-        } else
-            _extra->update(_distance);
-        //timestamp
+    void update(const uint64_t &past_timestamp) {
+        if (max_n_past_distances > 0) {
+            uint32_t _distance = past_timestamp - _past_timestamp;
+            assert(_distance);
+            if (!_extra) {
+                _extra = new MetaExtra(_distance);
+            } else
+                _extra->update(_distance);
+        }
         _past_timestamp = past_timestamp;
         if (_freq < 65535)
             _freq++;
@@ -219,12 +217,6 @@ public:
     }
 };
 
-
-// struct KeyMapEntryT {
-//     unsigned int list_idx: 1;
-//     unsigned int list_pos: 31;
-// };
-
 struct KeyMapEntryT {
     uint8_t list_idx;
     uint32_t list_pos;
@@ -235,10 +227,15 @@ public:
     uint64_t current_seq = -1;
     uint32_t n_feature;
     sparse_hash_map<uint64_t, float> pred_map;
+    // 用于记录对象的预测结果, 同时记录id, 以保证状态切换
     vector<HeapUint> pred_times;
+    // 驱逐候选对象采样步长与区间
     uint64_t scan_length = 0;
+    // 新对象
     vector<uint64_t> new_obj_keys;
+    // 新对象占用地缓存空间
     uint64_t new_obj_size = 0;
+    // 驱逐对象的数量
     int evict_nums = 0;
     uint16_t sample_rate = 1024;
     uint8_t eviction_rate = 2;
@@ -248,16 +245,19 @@ public:
     uint32_t *object_distribution_n_eviction = (uint32_t*)malloc(sizeof(uint32_t) * 16);
     uint32_t initial_queue_length = 0;
     uint64_t origin_current_seq = 0;
-    uint8_t reserved_space = 1;
+    uint8_t reserved_space = 2;
+    // 采样指针
     uint32_t samplepointer = 0;
     uint8_t hsw = 1;
     uint64_t MAX_EVICTION_BOUNDARY[2] = {0, 0};
     uint32_t max_out_cache_size = 2;
+    // 窗口满了后
     uint8_t is_full = 0;
+    // 对象命中率的时间基线
     uint64_t n_req = 0;
     uint64_t n_hit = 0;
     uint64_t n_window_hit=0;
-    //key -> (0/1 list, idx)
+    uint64_t spointer_timestamp = 0;
     sparse_hash_map<uint64_t, KeyMapEntryT> key_map;
 
     CacheUpdateQueue in_cache;
@@ -291,33 +291,18 @@ public:
     enum ObjectiveT : uint8_t {
         byte_miss_ratio = 0, object_miss_ratio = 1
     };
+    // ObjectiveT objective = byte_miss_ratio;
     ObjectiveT objective = byte_miss_ratio;
 
     default_random_engine _generator = default_random_engine();
     uniform_int_distribution<std::size_t> _distribution = uniform_int_distribution<std::size_t>();
-
-    vector<int> segment_n_in;
-    vector<int> segment_n_out;
-    uint32_t obj_distribution[2];
-    uint32_t training_data_distribution[2];  //1: pos, 0: neg
-    vector<float> segment_positive_example_ratio;
-    vector<double> segment_percent_beyond;
-    int n_retrain = 0;
-    vector<int> segment_n_retrain;
     bool is_sampling = false;
 
     uint64_t byte_million_req;
-    
-    // bool compareHeapUint(const HeapUint& a, const HeapUint& b);
-
     void init_with_params(const map<string, string> &params) override {
         //set params
         for (auto &it: params) {
-            if (it.first == "sample_rate") {
-                sample_rate = stoul(it.second);
-            } else if (it.first == "hsw") {
-                hsw = stoull(it.second);
-            } else if (it.first == "num_iterations") {
+            if (it.first == "num_iterations") {
                 training_params["num_iterations"] = it.second;
             } else if (it.first == "learning_rate") {
                 training_params["learning_rate"] = it.second;
@@ -329,8 +314,17 @@ public:
                 byte_million_req = stoull(it.second);
             } else if(it.first == "sample_rate") {
                 sample_rate = stoull(it.second);
+            } else if (it.first == "objective") {
+                if (it.second == "byte-miss-ratio")
+                    objective = byte_miss_ratio;
+                else if (it.second == "object-miss-ratio")
+                    objective = object_miss_ratio;
+                else {
+                    cerr << "error: unknown objective" << endl;
+                    exit(-1);
+                }
             } else {
-                cerr << "TLCache unrecognized parameter: " << it.first << endl;
+                cerr << "3LCache unrecognized parameter: " << it.first << endl;
             }
         }
 
@@ -395,3 +389,4 @@ public:
 
 }
 #endif
+

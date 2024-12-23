@@ -81,19 +81,24 @@ set(sourceCPP
         LHD/LHD_Interface.cpp
         )
 
-# if (ENABLE_LRB)
-#     set (sourceCPP ${sourceCPP} 
-#         LRB/lrb.cpp
-#         LRB/LRB_Interface.cpp
-#         )
-# endif()
-
 if (ENABLE_LRB)
     set (sourceCPP ${sourceCPP} 
-        ../../../../3LCache/TLCache.cpp
-        ../../../../3LCache/TLCache_Interface.cpp
+        LRB/lrb.cpp
+        LRB/LRB_Interface.cpp
         )
 endif()
+
+set (sourceCPP ${sourceCPP} 
+    ../../../../3LCache/TLCache.cpp
+    ../../../../3LCache/TLCache_Interface.cpp
+)
+
+set (sourceCPP ${sourceCPP} 
+    ../../../../3LCache/TLCache.cpp
+    ../../../../3LCache/TLCache_OMR_Interface.cpp
+)
+
+
 
 if (ENABLE_GLCACHE)
     set(sourceC 

@@ -20,6 +20,21 @@ static inline cache_t *create_cache(const char *trace_path, const char *eviction
       .hashpower = 24,
       .consider_obj_metadata = consider_obj_metadata,
   };
+
+  // common_cache_params_t object_cc_params = {
+  //     .cache_size = cache_size,
+  //     .default_ttl = 86400 * 300,
+  //     .hashpower = 24,
+  //     .consider_obj_metadata = consider_obj_metadata,
+  //     .objective = "objective=object-miss-ratio",
+  // };
+  // common_cache_params_t byte_cc_params = {
+  //     .cache_size = cache_size,
+  //     .default_ttl = 86400 * 300,
+  //     .hashpower = 24,
+  //     .consider_obj_metadata = consider_obj_metadata,
+  //     .objective = "objective=byte-miss-ratio",
+  // };
   cache_t *cache;
 
   /* the trace provided is small */
@@ -132,6 +147,12 @@ static inline cache_t *create_cache(const char *trace_path, const char *eviction
     cache = QDLP_init(cc_params, eviction_params);
   } else if (strcasecmp(eviction_algo, "sieve") == 0) {
     cache = Sieve_init(cc_params, eviction_params);
+  } else if (strcasecmp(eviction_algo, "3LCache-OMR") == 0) {
+    eviction_params = "objective=object-miss-ratio";
+    cache = TLCache_init(cc_params, eviction_params);
+  } else if (strcasecmp(eviction_algo, "3LCache") == 0) {
+    eviction_params = "objective=byte-miss-ratio";
+    cache = TLCache_init(cc_params, eviction_params);
 #ifdef ENABLE_GLCACHE
   } else if (strcasecmp(eviction_algo, "GLCache") == 0 || strcasecmp(eviction_algo, "gl-cache") == 0) {
     cache = GLCache_init(cc_params, eviction_params);
@@ -140,10 +161,6 @@ static inline cache_t *create_cache(const char *trace_path, const char *eviction
   } else if (strcasecmp(eviction_algo, "lrb") == 0) {
     cache = LRB_init(cc_params, eviction_params);
 #endif
-// #ifdef ENABLE_3LCache
-//   } else if (strcasecmp(eviction_algo, "3lcache") == 0) {
-//     cache = LRB_init(cc_params, eviction_params);
-// #endif
 #ifdef INCLUDE_PRIV
   } else if (strcasecmp(eviction_algo, "mclock") == 0) {
     cache = MClock_init(cc_params, eviction_params);
