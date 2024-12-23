@@ -43,20 +43,19 @@ After building and installing, cachesim should be in the _build/bin/ directory.
 ## Examples
 ```bash
 
-~/libCacheSim/_build/bin/cachesim /path/to/tencentBlock_ns3964.csv csv 3lcache 1347453593  -t "time-col=1, obj-id-col=2, obj-size-col=3"
-# Output object miss ratio and throughput
-/data/trace/tencentblock/tencentBlock_ns3964.csv 3L-Cache cache size     1GiB,         13625211 req, miss ratio 0.3473, throughput 0.58 MQPS
-
+/path/to/cachesim /data/csv/tencentBlock_ns3964.csv csv 3lcache-omr 1347453593 -t "time-col=1, obj-id-col=2, obj-size-col=3"
+# Output object miss ratio
+tencentBlock_ns3964.csv TLCache-OMR cache size     1GiB,         13625211 req, miss ratio 0.3380, throughput 0.59 MQPS
 
 ~/libCacheSim/_build/bin/cachesim /path/to/tencentBlock_ns3964.csv csv 3lcache 1347453593,13474535  -t "time-col=1, obj-id-col=2, obj-size-col=3"
 #Output object miss ratio and byte miss ratio
-result/tencentBlock_ns3964.csv                          3L-Cache cache size        1GiB, 13625211 req, miss ratio 0.3473, byte miss ratio 0.1030
-result/tencentBlock_ns3964.csv                          3L-Cache cache size        0GiB, 13625211 req, miss ratio 0.5297, byte miss ratio 0.6389
+result/tencentBlock_ns3964.csv                      TLCache-BMR cache size        1GiB, 13625211 req, miss ratio 0.3421, byte miss ratio 0.1034
+result/tencentBlock_ns3964.csv                      TLCache-BMR cache size        0GiB, 13625211 req, miss ratio 0.5300, byte miss ratio 0.6377
 ```
 
-## Evaluate algorithms on a large number of traces
+<!-- ## Evaluate algorithms on a large number of traces
 ```bash
 cd experiment/scripts
 python3 miss_ratio_simulation.py <dataset_path> <num_process> <eviction_algo>
 ```
-The miss_ratio_simulation script can evaluate algorithms on a large number of traces, and the evaluation results will be stored in experiments/scripts/results.
+The miss_ratio_simulation script can evaluate algorithms on a large number of traces, and the evaluation results will be stored in experiments/scripts/results. -->
