@@ -82,7 +82,6 @@ bool TLCacheCache::lookup(const SimpleRequest &req) {
                 n_hit++;
             n_window_hit++;
         }
-        // 找到对应的窗口内的对象请求
         Meta &meta = list_idx == 0 ?  in_cache.metas[list_pos]: out_cache.metas[uint32_t(list_pos - out_cache.front_index)];
         auto sample_time = meta._sample_times;
         if (sample_time != 0 && (_distribution(_generator) % 4 == 0 || !booster)) {
@@ -154,7 +153,6 @@ void TLCacheCache::admit(const SimpleRequest &req) {
         LOG("L", _cacheSize, req.id, size);
         return;
     }
-    // 未开始替换对象时，我们只需要在out_cache中更新数据即可
     auto it = key_map.find(req.id);
     uint32_t pos;
     if (it == key_map.end()){
@@ -311,13 +309,10 @@ void TLCacheCache::evict_with_candidate(pair<uint64_t, uint32_t> &epair) {
         key_map.find(in_cache.metas.back()._key)->second.list_pos = old_pos;
         in_cache.metas[old_pos] = in_cache.metas.back();
         in_cache.dq[old_pos] = in_cache.dq.back();
-        // in_cache.dq[in_cache.dq[old_pos].prev].next = old_pos;
-        // in_cache.dq[in_cache.dq[old_pos].next].prev = old_pos;
         if (in_cache.q.tail == in_cache_tail_idx)
             in_cache.q.tail = old_pos;
         if (in_cache.q.head == in_cache_tail_idx)
             in_cache.q.head = old_pos;
-        // in_cache.erase(in_cache_tail_idx);
     }
     
     in_cache.metas.pop_back();
@@ -374,7 +369,6 @@ void TLCacheCache::prediction(vector<uint32_t> sampled_objects) {
     uint32_t pos;
     unsigned int idx_row = 0;
     for (; idx_row < sample_nums; idx_row++) {
-        // 使用lru的方法进行采样驱逐，修改点
         pos = sampled_objects[idx_row];
         auto &meta = in_cache.metas[pos];
         keys[idx_row] = meta._key;
@@ -406,8 +400,6 @@ void TLCacheCache::prediction(vector<uint32_t> sampled_objects) {
 
         indptr[idx_row + 1] = idx_feature;
     }
-    // if (spointer_timestamp > new_min_past_timestamp)
-    //     scan_length = initial_queue_length;
     int64_t len;
     double scores[sample_nums];
     LGBM_BoosterPredictForCSR(booster,
