@@ -32,7 +32,7 @@ After building and installing, cachesim should be in the _build/bin/ directory.
 ```
 
 ## Traces
-| Dataset       | Year |    Type   |                                      Original release                                     |                                OracleGeneral format                                |
+| Dataset       | Year |    Type   |                                      Original Link|
 |---------------|------|:---------:|:-----------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------:|
 | Tencent Photo | 2018 |   object  |                      [link](http://iotta.snia.org/traces/parallel?only=27476) |
 | WikiCDN       | 2019 |   object  |          [link](https://wikitech.wikimedia.org/wiki/Analytics/Data_Lake/Traffic/Caching)  [link](http://lrb.cs.princeton.edu/wiki2018.tr.tar.gz) [link](http://lrb.cs.princeton.edu/wiki2019.tr.tar.gz) |
