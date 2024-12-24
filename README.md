@@ -39,7 +39,7 @@ After building and installing, cachesim should be in the _build/bin/ directory.
 | Tencent Photo | 2018 |   object  |                      [link](http://iotta.snia.org/traces/parallel?only=27476)                     |
 | WikiCDN       | 2019 |   object  |          [link](https://wikitech.wikimedia.org/wiki/Analytics/Data_Lake/Traffic/Caching)          |
 | WikiCDN 2018  | 2018 |   object  |          [link](http://lrb.cs.princeton.edu/wiki2018.tr.tar.gz)                                   |
-| WikiCDN 2019  | 2018 |   object  |          [link](http://lrb.cs.princeton.edu/wiki2019.tr.tar.gz)                                   |
+| WikiCDN 2019  | 2019 |   object  |          [link](http://lrb.cs.princeton.edu/wiki2019.tr.tar.gz)                                   |
 | Tencent CBS   | 2020 |   block   |                      [link](http://iotta.snia.org/traces/parallel?only=27917)                     |
 | Alibaba Block | 2020 |   block   |                          [link](https://github.com/alibaba/block-traces)                          |
 | Twitter       | 2020 | key-value |                          [link](https://github.com/twitter/cache-traces)                          |
