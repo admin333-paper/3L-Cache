@@ -6,12 +6,18 @@
 #include <unistd.h>
 
 #include "../../include/libCacheSim/reader.h"
+#include "../../traceReader/customizedReader/lcs.h"
 #include "internal.hpp"
 
 int main(int argc, char *argv[]) {
   struct arguments args;
 
   cli::parse_cmd(argc, argv, &args);
+
+  if (args.print_stat) {
+    lcs_print_trace_stat(args.reader);
+    return 0;
+  }
 
   request_t *req = new_request();
   read_one_req(args.reader, req);
@@ -34,8 +40,8 @@ int main(int argc, char *argv[]) {
     if (args.print_obj_id_only) {
       printf("%lu\n", (unsigned long)req->obj_id);
     } else {
-      printf("%ld%c%lu%c%d", (long)req->clock_time, args.delimiter,
-             (unsigned long)req->obj_id, args.delimiter, (int)req->obj_size);
+      printf("%ld%c%lu%c%d", (long)req->clock_time, args.delimiter, (unsigned long)req->obj_id, args.delimiter,
+             (int)req->obj_size);
       if (trace_has_next_access_vtime) {
         printf("%c%ld\n", args.delimiter, (long)req->next_access_vtime);
       } else {

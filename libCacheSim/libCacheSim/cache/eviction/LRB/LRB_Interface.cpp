@@ -220,7 +220,7 @@ static cache_obj_t *LRB_insert(cache_t *cache, const request_t *req) {
 /**
  * @brief find an eviction candidate, but do not evict from the cache,
  * and do not update the cache metadata
- * note that eviction must evicts this object, so if we implment this function
+ * note that eviction must evicts this object, so if we implement this function
  * and it uses random number, we must make sure that the same object is evicted
  * when we call evict
  *
@@ -231,9 +231,9 @@ static cache_obj_t *LRB_insert(cache_t *cache, const request_t *req) {
 static cache_obj_t *LRB_to_evict(cache_t *cache, const request_t *req) {
   auto *params = static_cast<LRB_params_t *>(cache->eviction_params);
   auto *lrb = static_cast<lrb::LRBCache *>(params->LRB_cache);
-  // lrb rank变成了evict_preobj
-  params->to_evict_pair = lrb->evict_predobj();
-  auto &meta = lrb->in_cache.metas[params->to_evict_pair.second];
+
+  params->to_evict_pair = lrb->rank();
+  auto &meta = lrb->in_cache_metas[params->to_evict_pair.second];
 
   params->obj_tmp.obj_id = params->to_evict_pair.first;
   params->obj_tmp.obj_size = meta._size;
@@ -290,7 +290,7 @@ static int64_t LRB_get_n_obj(const cache_t *cache) {
   auto *params = static_cast<LRB_params_t *>(cache->eviction_params);
   auto *lrb = static_cast<lrb::LRBCache *>(params->LRB_cache);
 
-  return lrb->in_cache.metas.size();
+  return lrb->in_cache_metas.size();
 }
 
 static int64_t LRB_get_occupied_byte(const cache_t *cache) {

@@ -11,11 +11,7 @@ extern "C" {
 
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
-typedef enum {
-  my_false = 0,
-  my_true = 1, 
-  my_unknown = 2
-} my_bool;
+typedef enum { my_false = 0, my_true = 1, my_unknown = 2 } my_bool;
 
 static const char *my_bool_str[] = {"false", "true", "unknown"};
 
@@ -31,36 +27,20 @@ typedef enum {
   CSV_TRACE,
   BIN_TRACE,
   PLAIN_TXT_TRACE,
-  STANDARD_IQQ_TRACE,
   ORACLE_GENERAL_TRACE,
-  LCS_TRACE,    // libCacheSim format
+  LCS_TRACE,  // libCacheSim format
 
   /* special trace */
   VSCSI_TRACE,
-
   TWR_TRACE,
   TWRNS_TRACE,
-  CF1_TRACE,
-  AKAMAI_TRACE,
-  WIKI16u_TRACE,
-  WIKI19u_TRACE,
-  WIKI19t_TRACE,
-  STANDARD_IQI_TRACE,
-  STANDARD_III_TRACE,
-  STANDARD_IQIBH_TRACE,
 
-  ORACLE_GENERALOPNS_TRACE,
   ORACLE_SIM_TWR_TRACE,
   ORACLE_SYS_TWR_TRACE,
   ORACLE_SIM_TWRNS_TRACE,
   ORACLE_SYS_TWRNS_TRACE,
-  ORACLE_CF1_TRACE,
 
-  ORACLE_AKAMAI_TRACE,
-  ORACLE_WIKI16u_TRACE,
-  ORACLE_WIKI19u_TRACE,
   VALPIN_TRACE,
-  // ORACLE_WIKI19t_TRACE,
 
   UNKNOWN_TRACE,
 } __attribute__((__packed__)) trace_type_e;
@@ -69,42 +49,21 @@ static char *g_trace_type_name[UNKNOWN_TRACE + 2] = {
     "CSV_TRACE",
     "BIN_TRACE",
     "PLAIN_TXT_TRACE",
-    "STANDARD_IQI_TRACE",
     "ORACLE_GENERAL_TRACE",
     "LCS_TRACE",
 
     "VSCSI_TRACE",
     "TWR_TRACE",
     "TWRNS_TRACE",
-    "CF1_TRACE",
-    "AKAMAI_TRACE",
-    "WIKI16u_TRACE",
-    "WIKI19u_TRACE",
-    "WIKI19t_TRACE",
-    "STANDARD_IQQ_TRACE",
-    "STANDARD_III_TRACE",
-    "STANDARD_IQIBH_TRACE",
-    "ORACLE_GENERALOPNS_TRACE",
+
     "ORACLE_SIM_TWR_TRACE",
     "ORACLE_SYS_TWR_TRACE",
     "ORACLE_SIM_TWRNS_TRACE",
     "ORACLE_SYS_TWRNS_TRACE",
-    "ORACLE_CF1_TRACE",
-    "ORACLE_AKAMAI_TRACE",
-    "ORACLE_WIKI16u_TRACE",
-    "ORACLE_WIKI19u_TRACE",
+
     "VALPIN_TRACE",
-    // "ORACLE_WIKI19t_TRACE",
     "UNKNOWN_TRACE",
 };
-
-// obj_id type
-// typedef enum {
-//   OBJ_ID_NUM = 'l',
-//   OBJ_ID_STR = 'c',
-
-//   UNKNOWN_OBJ_ID,
-// } __attribute__((__packed__)) obj_id_type_e;
 
 typedef enum {
   OP_NOP = 0,
@@ -120,27 +79,15 @@ typedef enum {
   OP_INCR = 10,
   OP_DECR = 11,
 
-  OP_READ,
-  OP_WRITE,
-  OP_UPDATE,
+  OP_READ = 12,
+  OP_WRITE = 13,
+  OP_UPDATE = 14,
 
-  OP_INVALID,
+  OP_INVALID = 255
 } req_op_e;
 
-static char *req_op_str[OP_INVALID + 2] = {
-    "nop",     "get",    "gets", "set",  "add",  "cas",   "replace", "append",
-    "prepend", "delete", "incr", "decr", "read", "write", "update",  "invalid"};
-
-// typedef enum {
-//   cache_ck_hit = 0,
-//   cache_ck_miss = 1,
-//   cache_ck_expired = 2,
-
-//   cache_ck_invalid,
-// } __attribute__((__packed__)) bool;
-
-// static char *cache_ck_res_str[cache_ck_invalid + 1] = {"hit", "miss", "expired",
-//                                                        "invalid"};
+static char *req_op_str[OP_INVALID + 2] = {"nop",     "get",    "gets", "set",  "add",  "cas",   "replace", "append",
+                                           "prepend", "delete", "incr", "decr", "read", "write", "update",  "invalid"};
 
 typedef enum { ERR, OK, MY_EOF } rstatus;
 static char *rstatus_str[3] = {"ERR", "OK", "MY_EOF"};

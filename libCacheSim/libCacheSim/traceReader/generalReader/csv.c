@@ -8,16 +8,21 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 
 #include "../../../libCacheSim/include/libCacheSim/macro.h"
 #include "../../dataStructure/hash/hash.h"
+#include "../readerInternal.h"
 #include "libcsv.h"
-#include "readerInternal.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// to suppress the warning of getline
+ssize_t getline(char **lineptr, size_t *n, FILE *stream);
 
 /**
  * @brief count the number of times char c appears in string str
@@ -43,8 +48,7 @@ static int count_occurrence(const char *str, const char c) {
  * @param in_buf_size
  * @return int
  */
-static int read_first_line(const reader_t *reader, char *in_buf,
-                           const size_t in_buf_size) {
+static int read_first_line(const reader_t *reader, char *in_buf, const size_t in_buf_size) {
   FILE *ifile = fopen(reader->trace_path, "r");
   char *buf = NULL;
   size_t n = 0;
@@ -88,8 +92,7 @@ static char csv_detect_delimiter(const reader_t *reader) {
 
   for (int i = 0; i < 4; i++) {
     // (5-i) account for the commonality of the delimiters
-    possible_delim_counts[i] =
-        count_occurrence(first_line, possible_delims[i]) * (4 - i);
+    possible_delim_counts[i] = count_occurrence(first_line, possible_delims[i]) * (4 - i);
     if (possible_delim_counts[i] > max_count) {
       max_count = possible_delim_counts[i];
       delimiter = possible_delims[i];
@@ -129,8 +132,7 @@ static bool csv_detect_header(const reader_t *reader) {
       n_digit += 1;
     } else if (isalpha(first_line[i])) {
       n_letter += 1;
-      if ((first_line[i] <= 'f' && first_line[i] >= 'a') ||
-          (first_line[i] <= 'F' && first_line[i] >= 'A')) {
+      if ((first_line[i] <= 'f' && first_line[i] >= 'a') || (first_line[i] <= 'F' && first_line[i] >= 'A')) {
         /* a-f can be hex number */
         n_af += 1;
       }
@@ -200,26 +202,62 @@ static inline void csv_cb1(void *s, size_t len, void *data) {
     if (reader->obj_id_is_num) {
       req->obj_id = strtoull((char *)s, &end, 0);
       if (req->obj_id == 0 && s == end) {
-        WARN("object id is not numeric %s\n", (char *)s);
+        WARN("object id is not numeric: \"%s\"\n", (char *)s);
       }
     } else {
+      if (!reader->obj_id_is_num_set) {
+        if (is_str_num((char *)s, len)) {
+          csv_params->n_obj_id_is_num++;
+        } else {
+          csv_params->n_obj_id_is_not_num++;
+        }
+        int n_req = csv_params->n_obj_id_is_num + csv_params->n_obj_id_is_not_num;
+        if (n_req > 20000) {
+          if (csv_params->n_obj_id_is_num > (double)n_req * 0.99) {
+            ERROR("detect obj_id is numeric, please specify -t 'obj-id-is-num=1'\n");
+          }
+        }
+      }
       // req->obj_id = (uint64_t)g_quark_from_string(s);
       req->obj_id = (uint64_t)get_hash_value_str((char *)s, len);
     }
   } else if (csv_params->curr_field_idx == csv_params->time_field_idx) {
-    // this does not work, because s is not null terminated
-    uint64_t ts = (uint64_t)atof((char *)s);
-    // uint64_t ts = (uint64_t)strtod((char *)s, &end);
+    // int64_t ts = (int64_t)atof((char *)s);
+    int64_t ts = (int64_t)strtod((char *)s, NULL);
     req->clock_time = ts;
   } else if (csv_params->curr_field_idx == csv_params->obj_size_field_idx) {
-    req->obj_size = (uint32_t)strtoul((char *)s, &end, 0);
+    req->obj_size = (int64_t)strtoul((char *)s, &end, 0);
     if (req->obj_size == 0 && end == s) {
-      ERROR("csvReader obj_size is not a number: \"%s\"\n", (char *)s);
+      WARN("csvReader obj_size is not a number: \"%s\"\n", (char *)s);
     }
+  } else if (csv_params->curr_field_idx == csv_params->op_field_idx) {
+    if (strncasecmp((char *)s, "read", len) == 0) {
+      req->op = OP_READ;
+    } else if (strncasecmp((char *)s, "write", len) == 0) {
+      req->op = OP_WRITE;
+    } else if (strncasecmp((char *)s, "get", len) == 0) {
+      req->op = OP_GET;
+    } else if (strncasecmp((char *)s, "set", len) == 0) {
+      req->op = OP_SET;
+    } else if (strncasecmp((char *)s, "delete", len) == 0) {
+      req->op = OP_DELETE;
+    } else {
+      WARN("unknown operation: \"%s\"\n", (char *)s);
+    }
+  } else if (csv_params->curr_field_idx == csv_params->ttl_field_idx) {
+    req->ttl = (uint32_t)strtoul((char *)s, &end, 0);
   } else if (csv_params->curr_field_idx == csv_params->cnt_field_idx) {
     reader->n_req_left = (uint64_t)strtoull((char *)s, &end, 0) - 1;
+  } else if (csv_params->curr_field_idx == csv_params->tenant_field_idx) {
+    req->tenant_id = (int32_t)strtoul((char *)s, &end, 0);
+  } else {
+    for (int i = 0; i < csv_params->n_feature_fields; i++) {
+      if (csv_params->curr_field_idx == csv_params->feature_fields[i]) {
+        req->features[i] = (int32_t)strtoul((char *)s, &end, 0);
+      }
+    }
+    req->n_features = csv_params->n_feature_fields;
   }
-
   csv_params->curr_field_idx++;
 }
 
@@ -233,8 +271,6 @@ static inline void csv_cb2(int c, void *data) {
   reader_t *reader = (reader_t *)data;
   csv_params_t *csv_params = reader->reader_params;
   csv_params->curr_field_idx = 1;
-
-  // printf("cb2 %d '%c'\n", csv_params->curr_field_idx, c);
 }
 
 /**
@@ -247,16 +283,26 @@ void csv_setup_reader(reader_t *const reader) {
   reader->trace_format = TXT_TRACE_FORMAT;
   reader_init_param_t *init_params = &reader->init_params;
 
-  reader->reader_params = (csv_params_t *)malloc(sizeof(csv_params_t));
-  csv_params_t *csv_params = reader->reader_params;
+  csv_params_t *csv_params = (csv_params_t *)malloc(sizeof(csv_params_t));
+  memset(csv_params, 0, sizeof(csv_params_t));
+  reader->reader_params = csv_params;
   csv_params->curr_field_idx = 1;
 
   csv_params->time_field_idx = init_params->time_field;
   csv_params->obj_id_field_idx = init_params->obj_id_field;
   csv_params->obj_size_field_idx = init_params->obj_size_field;
+  csv_params->op_field_idx = init_params->op_field;
+  csv_params->ttl_field_idx = init_params->ttl_field;
   csv_params->cnt_field_idx = init_params->cnt_field;
-  csv_params->csv_parser =
-      (struct csv_parser *)malloc(sizeof(struct csv_parser));
+  csv_params->tenant_field_idx = init_params->tenant_field;
+  csv_params->n_feature_fields = init_params->n_feature_fields;
+  for (int i = 0; i < csv_params->n_feature_fields; i++) {
+    csv_params->feature_fields[i] = init_params->feature_fields[i];
+  }
+
+  csv_params->csv_parser = (struct csv_parser *)malloc(sizeof(struct csv_parser));
+  csv_params->n_obj_id_is_num = 0;
+  csv_params->n_obj_id_is_not_num = 0;
 
   if (csv_init(csv_params->csv_parser, options) != 0) {
     fprintf(stderr, "Failed to initialize csv parser\n");
@@ -278,8 +324,7 @@ void csv_setup_reader(reader_t *const reader) {
     csv_params->has_header = init_params->has_header;
   }
   if (csv_params->has_header) {
-    ssize_t read_size =
-        getline(&reader->line_buf, &reader->line_buf_size, reader->file);
+    ssize_t read_size = getline(&reader->line_buf, &reader->line_buf_size, reader->file);
     reader->trace_start_offset = read_size;
   }
 }
@@ -306,10 +351,8 @@ int csv_read_one_req(reader_t *const reader, request_t *const req) {
     return 1;
   }
 
-  if ((size_t)csv_parse(csv_parser, *line_buf_ptr, read_size, csv_cb1, csv_cb2,
-                        reader) != read_size) {
-    WARN("parsing csv file error: %s\n",
-         csv_strerror(csv_error(csv_params->csv_parser)));
+  if ((size_t)csv_parse(csv_parser, *line_buf_ptr, read_size, csv_cb1, csv_cb2, reader) != read_size) {
+    WARN("parsing csv file error: %s\n", csv_strerror(csv_error(csv_params->csv_parser)));
   }
 
   csv_fini(csv_params->csv_parser, csv_cb1, csv_cb2, reader);
@@ -334,12 +377,12 @@ void csv_reset_reader(reader_t *reader) {
 
   csv_free(csv_params->csv_parser);
   csv_init(csv_params->csv_parser, CSV_APPEND_NULL);
-  if (csv_params->delimiter)
-    csv_set_delim(csv_params->csv_parser, csv_params->delimiter);
+  csv_params->n_obj_id_is_num = 0;
+  csv_params->n_obj_id_is_not_num = 0;
+  if (csv_params->delimiter) csv_set_delim(csv_params->csv_parser, csv_params->delimiter);
 
   if (csv_params->has_header) {
-    size_t _n =
-        getline(&reader->line_buf, &reader->line_buf_size, reader->file);
+    size_t _n = getline(&reader->line_buf, &reader->line_buf_size, reader->file);
   }
 }
 
