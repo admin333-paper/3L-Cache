@@ -47,10 +47,10 @@ void TLCacheCache::train() {
     origin_current_seq = current_seq;
 
     if (n_req > pow(10, 6) && is_full) {
-        if ((n_window_hit - n_hit) * 1.0 / (n_hit * hsw) > 0.01) { 
-            if (hsw < (n_req - n_hit) * 1.0 / (n_window_hit - n_hit) - 1)
+        if ((n_window_hit - n_hit) * 1.0 / (n_hit * (hsw - 1)) > 0.01) { 
+            if (hsw - 1 < (n_req - n_hit) / (n_window_hit - n_hit))
                 hsw += 1, is_full = 0;
-            hsw = fmin(hsw, 5);
+            hsw = fmin(hsw, 6);
         }    
         n_hit = 0, n_window_hit = 0, n_req = 0;
     }
@@ -120,7 +120,7 @@ bool TLCacheCache::lookup(const SimpleRequest &req) {
 }
 
 void TLCacheCache::erase_out_cache() {
-    max_out_cache_size = in_cache.metas.size() * hsw + 2;
+    max_out_cache_size = in_cache.metas.size() * (hsw - 1) + 2;
     
     if (out_cache.metas.size() >= max_out_cache_size) {
         if (is_full == 0)

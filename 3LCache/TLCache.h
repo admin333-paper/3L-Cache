@@ -248,7 +248,7 @@ public:
     uint8_t reserved_space = 2;
     // 采样指针
     uint32_t samplepointer = 0;
-    uint8_t hsw = 1;
+    uint8_t hsw = 2;
     uint64_t MAX_EVICTION_BOUNDARY[2] = {0, 0};
     uint32_t max_out_cache_size = 2;
     // 窗口满了后
