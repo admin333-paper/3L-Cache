@@ -30,6 +30,19 @@ After building and installing, cachesim should be in the _build/bin/ directory.
 ```bash
 ~/libCacheSim/_build/bin/cachesim trace_path trace_type eviction_algo cache_size [OPTION...]
 ```
+
+## Traces
+| Dataset       | Year |    Type   |                                      Original release                                     |                                OracleGeneral format                                |
+|---------------|------|:---------:|:-----------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------:|
+| Tencent Photo | 2018 |   object  |                      [link](http://iotta.snia.org/traces/parallel?only=27476) |
+| WikiCDN       | 2019 |   object  |          [link](https://wikitech.wikimedia.org/wiki/Analytics/Data_Lake/Traffic/Caching)  [link](http://lrb.cs.princeton.edu/wiki2018.tr.tar.gz) [link](http://lrb.cs.princeton.edu/wiki2019.tr.tar.gz) |
+| Tencent CBS   | 2020 |   block   |                      [link](http://iotta.snia.org/traces/parallel?only=27917)   |
+| Alibaba Block | 2020 |   block   |                          [link](https://github.com/alibaba/block-traces) |
+| Twitter       | 2020 | key-value |                          [link](https://github.com/twitter/cache-traces) |
+| MetaKV        | 2022 | key-value | [link](https://cachelib.org/docs/Cache_Library_User_Guides/Cachebench_FB_HW_eval/#list-of-traces) |
+| MetaCDN       | 2023 | object    | [link](https://cachelib.org/docs/Cache_Library_User_Guides/Cachebench_FB_HW_eval/#list-of-traces) |
+
+
 ## Run a single cache simulation
 ```bash
 ~/libCacheSim/_build/bin/cachesim /path/to/tencentBlock_ns3964.csv csv 3lcache 1347453593  -t "time-col=1, obj-id-col=2, obj-size-col=3"

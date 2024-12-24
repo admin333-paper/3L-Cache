@@ -9,9 +9,6 @@
 #include "../libCacheSim/libCacheSim/include/libCacheSim/cache.h"
 #include "TLCache.h"
 
-// using namespace webcachesim;
-// using namespace TLCache;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
